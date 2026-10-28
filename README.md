@@ -1,4 +1,4 @@
-# SelfHeal.ai — Stitch UI connected to the local FastAPI backend
+# rootfix.ai — Stitch UI connected to the local FastAPI backend
 
 This project combines the light-theme React UI exported from Google Stitch/AI Studio with the existing SelfHeal.ai FastAPI + SQLite backend.
 
