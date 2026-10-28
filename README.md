@@ -1,173 +1,76 @@
-# 🌿 rootfix_AI
-### Detect the Problem. Fix the Issue. Keep Things Running.
+# SelfHeal.ai — Stitch UI connected to the local FastAPI backend
 
-**rootfix_AI** is a self-healing AI automation project that helps identify common workflow failures, find their likely causes, and suggest fixes to recover from them.
+This project combines the light-theme React UI exported from Google Stitch/AI Studio with the existing SelfHeal.ai FastAPI + SQLite backend.
 
-Instead of spending too much time debugging small errors manually, rootfix_AI provides a simple way to simulate failures, review suggested corrections, and retry workflows.
+## What is connected
 
-## 🚩 Problem Statement
+- The incident list and pipeline are populated from `GET /api/executions`.
+- Workflow inventory and counts are populated from `GET /api/workflows` and `GET /api/dashboard`.
+- Recent backend events are populated from `GET /api/logs`.
+- The connection badge checks `GET /api/health`.
+- The simulation dialog calls `POST /api/simulate` for the three supported scenarios: `schema_mismatch`, `missing_field`, and `temporary_error`.
+- Approve, reject, and retry actions call the existing `/api/executions/{id}/approve`, `/reject`, and `/retry` endpoints.
+- The FastAPI Integration screen contains a live GET endpoint explorer; it sends real requests instead of displaying fabricated sample responses.
 
-Small errors in software workflows can interrupt operations and take time to debug. Finding the root cause, correcting the issue, and checking whether the workflow works again can require repeated manual effort.
+## Important limitations
 
-## 💡 Our Solution
+- This is a hackathon MVP using a local mock downstream service. Recovery attempts do not modify real production systems.
+- The backend records workflow status and events, but it does not collect real p99 latency, throughput, pod count, uptime, or traffic error-rate telemetry. The UI labels these as unavailable rather than inventing values.
+- Healing-policy toggles are currently local UI demonstration state. The existing backend has no policy persistence endpoints, so toggles are not saved to SQLite and do not change server-side recovery logic.
+- The main payload correction uses predefined schema mappings. Gemini is optional on the backend and is used to assist with the diagnosis text when configured; it does not execute generated code.
 
-rootfix_AI simplifies this process by bringing failure detection, diagnosis, fix suggestions, and retry actions into one dashboard.
+## Requirements
 
-### ✨ Key Features
+- Python 3.11 or newer
+- Node.js 20.19+ recommended for the exported Vite 8 project
+- An internet connection for the first dependency installation
 
-- **Failure Simulation** — Test common workflow failures.
-- **Root Cause Diagnosis** — Understand the likely reason behind a failure.
-- **Fix Suggestions** — View proposed corrections for supported scenarios.
-- **Human Approval** — Approve or reject a proposed fix.
-- **Retry and Recovery** — Retry a workflow and check the result.
-- **Execution Logs** — Keep track of workflow activities and outcomes.
-- **Dashboard** — Monitor workflows and recovery activity in one place.
+## Run with VS Code
 
-## ⚙️ How It Works
+1. Extract this folder and open `selfheal-ai-integrated` in VS Code.
+2. Open a terminal in the project root.
+3. Start the backend in Terminal 1:
 
-1. **Detect:** Simulate or identify a supported workflow failure.
-2. **Diagnose:** Determine the likely cause using predefined rules and optional AI-assisted diagnosis.
-3. **Suggest:** Prepare a correction for the supported scenario.
-4. **Review:** Approve or reject the proposed fix.
-5. **Retry:** Run the workflow again and check the outcome.
-6. **Record:** Store execution details for monitoring and review.
-
-## 🛠️ Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| React | Frontend and user interface |
-| Vite | Frontend development server and build tool |
-| Python | Backend programming |
-| FastAPI | Backend API |
-| SQLite | Storing workflow and execution records |
-| Gemini API *(optional)* | AI-assisted diagnosis, when configured |
-
-## 📁 Project Structure
-
-```text
-rootfix_AI/
-├── backend/
-│   ├── main.py
-│   ├── requirements.txt
-│   └── .env.example
-│
-├── frontend/
-│   ├── package.json
-│   └── src/
-│       ├── App.jsx
-│       ├── main.jsx
-│       └── styles.css
-│
-└── README.md
+```powershell
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r .\backend\requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn --app-dir .\backend main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-*Note: Update this structure if your actual repository contains additional files or folders.*
+4. Open a second terminal at the project root and start the frontend:
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-Make sure you have installed:
-
-- Python 3.10 or a compatible version for your dependencies
-- Node.js and npm
-- Git
-
-### 1. Clone the repository
-
-```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
-cd YOUR_PROJECT_FOLDER
-```
-
-Replace the placeholders with your actual GitHub repository URL and folder name.
-
-### 2. Start the backend
-
-Open a terminal in VS Code:
-
-```bash
-cd backend
-python -m venv venv
-```
-
-Activate the virtual environment.
-
-**Windows:**
-
-```bash
-venv\Scripts\activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Start the FastAPI server:
-
-```bash
-uvicorn main:app --reload
-```
-
-The backend should be available at:
-
-`http://127.0.0.1:8000`
-
-You can explore the API documentation at:
-
-`http://127.0.0.1:8000/docs`
-
-### 3. Start the frontend
-
-Open a **second terminal** in VS Code:
-
-```bash
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
-Open the local URL shown in the terminal, usually:
+5. Open the frontend at `http://127.0.0.1:5173`.
+6. Verify the backend at `http://127.0.0.1:8000/docs`.
 
-`http://localhost:5173`
+Keep both terminal windows open while using the app. If Smart App Control blocks `start.bat`, run the commands above directly in PowerShell; do not disable Windows security.
 
-If needed, configure `VITE_API_BASE_URL` in your frontend environment to point to the running backend.
+## Environment configuration
 
-## 🧪 Example Demo
+`frontend/.env.local` points the React app to `http://127.0.0.1:8000`. Change `VITE_API_BASE_URL` only if your backend runs at a different address. Frontend environment variables are public in the browser bundle, so do not put API secrets in frontend files. Optional Gemini credentials belong in `backend/.env`, based on `backend/.env.example`.
 
-Try the following flow in the dashboard:
+## Main files to customize
 
-1. Select a failure scenario.
-2. Click **Simulate Failure**.
-3. Review the diagnosis and proposed correction.
-4. Approve or reject the proposed fix.
-5. Retry the workflow and review the execution result.
+- `frontend/src/App.tsx` — API fetching, mapping backend records to UI incidents, simulation and approve/reject/retry handlers.
+- `frontend/src/components/SimulationModal.tsx` — supported failure scenarios and their descriptions.
+- `frontend/src/components/InspectorDrawer.tsx` — incident diagnosis, payload mapping, and recovery actions.
+- `frontend/src/components/FastApiBridgeView.tsx` — backend URL and live API endpoint tester.
+- `frontend/src/components/TelemetryView.tsx` — workflow health and recorded error information.
+- `frontend/src/index.css` — light-theme palette and base styles.
+- `backend/main.py` — original FastAPI API and SQLite recovery logic; not changed by this UI integration.
 
-## 🎯 Future Improvements
+## Suggested demo flow
 
-- Support more workflow types and failure scenarios.
-- Improve diagnosis and fix accuracy.
-- Add more validation before executing fixes.
-- Integrate with real monitoring tools and external services.
-- Expand automated recovery while maintaining human oversight.
-
-## 👥 Team
-
-**Project:** rootfix_AI  
-**Built for:** Hackathon  
-**Team Members:** Add your team members here.
-
-## 📌 Note
-
-rootfix_AI is a hackathon prototype. Its current recovery capabilities depend on the supported test scenarios and implemented logic. It is not intended to automatically repair every type of software failure.
-
-## ❤️ Acknowledgements
-
-Built with curiosity, teamwork, and the goal of making workflow recovery simpler.
-
----
-
-**rootfix_AI — Less time chasing errors. More time moving forward.**
+1. Open **Incidents & Pipeline**.
+2. Click **Simulate Incident**.
+3. Choose **JSON Schema Mismatch** and run it.
+4. Inspect the generated payload mapping.
+5. Click **Approve & Execute** or **Reject Fix**.
+6. Confirm the status and recent backend events update from SQLite.
+7. Try **Missing Required Field** to show why the system stops for human review.
+8. Try **Temporary Service Failure** to demonstrate a bounded retry against the mock service.
