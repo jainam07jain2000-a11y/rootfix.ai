@@ -1,0 +1,6 @@
+{
+  "name": "SelfHeal.ai - Autonomous System Reliability",
+  "description": "Ultra-refined light-mode autonomous systems recovery and self-healing UI with real-time 5-stage pipeline, telemetry inspector, and React + Vite export package.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
